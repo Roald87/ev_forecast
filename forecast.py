@@ -46,6 +46,7 @@ class Forecast(object):
         self.start_year = years[0]
         self.saturation = saturation
         self.tau_life = tau_life
+        self.fit_range = years
 
         # Parameters which are calculated later
         self.tau_exp, self.t_trans = 0, 0
@@ -95,12 +96,22 @@ class Forecast(object):
             - np.exp((t - self.t_trans - self.tau_life) / self.tau_exp))
         )
 
+    def set_fit_range(self, new_range):
+        """ Changes the range over which the fit is done """
+
+        self.fit_range = new_range
+
     def fit_exp_phase(self):
-        """ Fit the exponential growth phase. """
+        """ Fit the exponential growth phase.  """
+        amounts = [
+            amount for year, amount in zip(self.years, self.amounts)
+            if year in self.fit_range
+        ]
+
         popt, _ = optimize.curve_fit(
             lambda t, tau, t_trans: np.log(self.exp_growth(t, tau, t_trans)),
-            self.years - self.start_year,
-            np.log(self.amounts)
+            self.fit_range - self.start_year,
+            np.log(amounts)
         )
         self.tau_exp, self.t_trans = popt
 
